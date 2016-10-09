@@ -55,3 +55,6 @@ fabric.properties
 # *.ipr
 
 *.json
+*.csv
+*.sql
+*.js
