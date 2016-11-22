@@ -2,7 +2,7 @@ import json
 
 
 def toJSONfile():
-    '''with file branchtown.csv in directory'''
+    """with a source csv in directory"""
     dic = {}
 
     with open('SELECT_ZHMC__CMC_FROM_YGXD_ZHXXB_z_LEFT_.csv', encoding='utf8') as file:
