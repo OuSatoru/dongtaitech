@@ -13,6 +13,7 @@ type RGB struct {
 }
 
 func main() {
+	fmt.Println("依次输入RGB值，每输一个按一次回车。")
 	stdin := bufio.NewReader(os.Stdin)
 	var r, g, b int
 	fmt.Fscan(stdin, &r)
@@ -22,6 +23,7 @@ func main() {
 	fmt.Fscan(stdin, &b)
 	color := RGB{r, g, b}
 	fmt.Println(toColorStr(color.traverse()))
+	fmt.Scanln()
 }
 
 func (c RGB) traverse() RGB {

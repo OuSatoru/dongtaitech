@@ -58,3 +58,7 @@ fabric.properties
 *.csv
 *.sql
 *.js
+*.exe
+build
+*.db
+*.cpt
