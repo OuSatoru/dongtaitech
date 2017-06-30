@@ -21,7 +21,7 @@ def toJSONfile():
         file.write(out)
 
 
-# sharp when not needed
+# comment when not needed
 # toJSONfile()
 text = ""
 d = json.loads(open('branchtown.json', encoding='gbk').read())
