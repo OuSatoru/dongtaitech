@@ -1,0 +1,125 @@
+###########################################################
+#   文 件 名:   3910.def                                   #
+#   功能说明:   测试界面                                     #
+#   作    者:   王聪                                       #
+#   编写日期:                                              #
+#   修改日期:                                              #
+###########################################################
+
+#交易开始 定义交易类型标识
+CB                      #江苏农信终端平台交易类型
+################ 输入输出交易局部变量定义 #################
+#@ UI_VAR_BEGIN
+INT iButton,iRet,i
+
+CHAR sInput
+CHAR sOutput
+
+CHAR SAY1
+CHAR SAY2
+
+INT iCurrRow
+CHAR sWinSet = "6,3,9,71,2"
+
+######################### 主程序流程 ##########################
+#签到检查
+CALL LIB "CBOD_public.SignCtrl" ( 0, 0 )
+IF ( G_CALL_FLAG <= 0 )
+    EXIT
+ENDIF
+#显示交易标题
+CALL LIB  "CBOD_public.SetTradeTitle" ()
+#清除交易画面
+CALL LIB "CBOD_public.ClearTradeScreen" ()
+
+WHILE (1)
+        WHILE (1)
+                CALL FUNC MainForm_Say ()                                                       # 交易主画面
+                CALL FUNC MainForm_SayValue ()                                          # 交易数据
+                CALL FUNC MainForm_Get ()                                                       # 交易数据输入
+                READ ()                                                                                         # 清除输入场
+                iButton = CALL LIB "CBOD_public.TradeButton" (1)        # 交易按钮
+                IF (iButton = 1)
+                        CONTINUE
+                ELSE
+                        IF (iButton = 2)
+                                BREAK
+                        ELSE
+                                EXIT
+                        ENDIF
+                ENDIF
+        ENDWHILE
+
+        # 按确定后的主机通讯
+        iRet = CALL FUNC MainForm_PackComm ()
+        IF (iRet = 0)
+                CONTINUE
+        ENDIF
+        BREAK
+ENDWHILE
+
+# 显示主机返回的数据
+CALL FUNC Data_Show ()
+# 凭证自动打印（最后次通讯返回)
+IF (sFuncCode = "1" || sFuncCode = "2")
+        CALL LIB "CBOD_output.AutoPrint" ()
+ENDIF
+CALL LIB "CBOD_public.PromptMsg" ("交易成功, 按任意键退出!", 0)
+# 按 ESC 或 · 退出交易
+CALL LIB "CBOD_public.ExitTrade" ()
+EXIT
+####################### 主程序结束 ########################
+
+
+###################### 交易函数定义 #######################
+
+# 初始化交易画面
+FUNC MainForm_Say ()
+        @ 5,5   SAY "输入文字 [                      ]"
+        @ 6,5   SAY "Hello    [                      ]"
+        @ 7,5   SAY "Say Value [                      ]"
+        TABLEHEAD(SAY1,"账号",-10)
+        TABLEHEAD(SAY1,"金额",-15)
+        TABLEHEAD(SAY1,"利息",-32)
+        WINSET(9,4,21,78,2)
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        TABLEDATA(SAY2,"100011111111111","200,000.11","10.00","\n")
+        TABLEDATA(SAY2,"100011111111111","100,000.11","11.00","\n")
+        WINTABLE(SAY1, "", SAY2)
+ENDFUNC
+
+FUNC MainForm_SayValue ()
+    @ 7,15 SAY "abcs" PICTURE -10"X"
+ENDFUNC
+
+# 交易输入场控制
+FUNC MainForm_Get ()
+        @ 5,15 GET (sInput) PICTURE -10"X" \
+        ONBLUR [FUNC AddHello ()] \
+        PROMPT "输入一些字符"
+ENDFUNC
+
+FUNC AddHello ()
+        sOutput = EXE("$HOME/A/def/def", sInput)
+        @ 6,15 SAY  sOutput PICTURE -18"X"
+        RETURN 1
+ENDFUNC

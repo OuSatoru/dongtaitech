@@ -1,0 +1,208 @@
+###########################################################
+#   文 件 名:   3910.def                                   #
+#   功能说明:   复核人员提交                                 #
+#   作    者:   王聪                                       #
+#   编写日期:                                              #
+#   修改日期:                                              #
+###########################################################
+
+#交易开始 定义交易类型标识
+CB                      #江苏农信终端平台交易类型
+################ 输入输出交易局部变量定义 #################
+#@ UI_VAR_BEGIN
+INT iButton,iRet,i
+
+CHAR sFuncCode = "0"
+
+CHAR canReview
+CHAR submitter
+CHAR reviewer
+
+CHAR sInput
+CHAR sOutput
+
+CHAR sHint
+
+CHAR sTotalCount
+CHAR sTotalAmount
+
+CHAR asOut[100]
+
+CHAR sYesterday
+
+
+######################### 主程序流程 ##########################
+#签到检查
+CALL LIB "CBOD_public.SignCtrl" ( 0, 0 )
+IF ( G_CALL_FLAG <= 0 )
+    EXIT
+ENDIF
+#显示交易标题
+CALL LIB  "CBOD_public.SetTradeTitle" ()
+#清除交易画面
+CALL LIB "CBOD_public.ClearTradeScreen" ()
+
+WHILE (1)
+        WHILE (1)
+                CALL FUNC MainForm_Say ()                                                       # 交易主画面
+                CALL FUNC MainForm_SayValue ()                                          # 交易数据
+                CALL FUNC MainForm_Get ()                                                       # 交易数据输入
+                READ ()                                                                                         # 清除输入场
+                iButton = CALL LIB "CBOD_public.TradeButton" (1)        # 交易按钮
+                IF (iButton = 1)
+                        CONTINUE
+                ELSE
+                        IF (iButton = 2)
+                                BREAK
+                        ELSE
+                                EXIT
+                        ENDIF
+                ENDIF
+        ENDWHILE
+
+        # 按确定后的主机通讯
+        iRet = CALL FUNC MainForm_PackComm ()
+        IF (iRet = 0)
+                CONTINUE
+        ENDIF
+        BREAK
+ENDWHILE
+
+# 显示主机返回的数据
+CALL FUNC Data_Show ()
+# 凭证自动打印（最后次通讯返回)
+IF (sFuncCode = "1" || sFuncCode = "2")
+        CALL LIB "CBOD_output.AutoPrint" ()
+ENDIF
+CALL LIB "CBOD_public.PromptMsg" ("交易成功, 按任意键退出!", 0)
+# 按 ESC 或 · 退出交易
+CALL LIB "CBOD_public.ExitTrade" ()
+EXIT
+####################### 主程序结束 ########################
+
+###################### 交易函数定义 #######################
+
+# 初始化交易画面
+FUNC MainForm_Say ()
+        @ 5,5   SAY "发送日期[                                      ]"
+        @ 6,5   SAY "总笔数  [                                      ]"
+        @ 7,5   SAY "发送金额[                                      ]"
+        @ 8,5   SAY "提示    [                                      ]"
+        @ 9,5   SAY "查看网址[                                      ]"
+        
+ENDFUNC
+
+FUNC MainForm_SayValue ()
+    #sYesterday = EXE("$HOME/A/def/def_linux_386", "-date", "yesterday")
+    #@ 5,14 SAY sYesterday PICTURE -18"X"
+    #CALL FUNC Can_Review ()
+    #CALL FUNC AsignVal ()
+    
+    #@ 6,14 SAY sTotalCount PICTURE -10"X"
+    #@ 7,14 SAY sTotalAmount PICTURE -20"X"
+    #@ 8,14 SAY sHint PICTURE -18"X"
+    
+ENDFUNC
+
+FUNC MainForm_Get ()
+        @ 5,14 GET (sYesterday) PICTURE -10"X" \
+        ONBLUR [FUNC Real_SayValue ()] \
+        PROMPT "代发文件接收日期，一般为上一天"
+ENDFUNC
+
+FUNC Real_SayValue ()
+    CALL FUNC Can_Review ()
+    CALL FUNC AsignVal ()
+    
+    @ 6,14 SAY sTotalCount PICTURE -10"X"
+    @ 7,14 SAY sTotalAmount PICTURE -20"X"
+    @ 8,14 SAY sHint PICTURE -18"X"
+ENDFUNC
+
+FUNC Can_Review ()
+    CALL LIB "CBOD_commun_afe.PackXmlTia" ("AFE001", "T", "CC0101301020")
+	IF (G_CALL_FLAG = 0)
+		RETURN 0
+	ENDIF
+
+    GR_XML_NODENAME[1] = "req_date"
+    GR_XML_NODEVAR[1] = sYesterday
+
+    CALL LIB "CBOD_commun_afe.PackXmlData" ("AFE001")
+	IF (G_CALL_FLAG = 0)
+		RETURN 0
+	ENDIF
+
+    ARRAYCLEAR("asOut")
+    iRet = UNPACKCOMMBUF(G_FORMDATA[1], "CC0101301020g", "asOut")
+    submitter = TRIM(asOut[1])
+    reviewer = TRIM(asOut[2])
+
+    @ 8,14 SAY reviewer PICTURE -20"X"
+
+    IF (submitter = "")
+        canReview = "false"
+        sHint = "不可复核，请先提交批量代发信息"
+    ELSE
+        IF (submitter = G_TELLER)
+            canReview = "false"
+            sHint = "不得复核自己的"
+        ELSE
+            IF (reviewer <> "")
+                canReview = "false"
+                sHint = "已经复核"
+            ELSE
+                canReview = "true"
+                sHint = "请复核人员在数据分析平台查看代发明细"
+            ENDIF
+        ENDIF
+    ENDIF
+ENDFUNC
+
+
+FUNC AsignVal () 
+    CALL LIB "CBOD_commun_afe.PackXmlTia" ("AFE001", "T", "CC0101301010")
+	IF (G_CALL_FLAG = 0)
+		RETURN 0
+	ENDIF
+
+    GR_XML_NODENAME[1] = "req_date"
+    GR_XML_NODEVAR[1] = sYesterday
+
+    CALL LIB "CBOD_commun_afe.PackXmlData" ("AFE001")
+	IF (G_CALL_FLAG = 0)
+		RETURN 0
+	ENDIF
+
+    ARRAYCLEAR("asOut")
+    iRet = UNPACKCOMMBUF(G_FORMDATA[1], "CC0101301010g", "asOut")
+    sTotalCount = asOut[1]
+    sTotalAmount = asOut[2]
+ENDFUNC
+
+FUNC MainForm_PackComm ()
+    IF (canReview = "true")
+        CALL LIB "CBOD_commun_afe.PackXmlTia" ("AFE001", "T", "CC0101301021")
+        IF (G_CALL_FLAG = 0)
+            RETURN 0
+        ENDIF
+
+        GR_XML_NODENAME[1] = "req_date"
+        GR_XML_NODEVAR[1] = sYesterday
+        GR_XML_NODENAME[2] = "teller_no"
+        GR_XML_NODEVAR[2] = G_TELLER
+        GR_XML_NODENAME[3] = "total_count"
+        GR_XML_NODEVAR[3] = sTotalCount
+        GR_XML_NODENAME[4] = "total_amount"
+        GR_XML_NODEVAR[4] = sTotalAmount
+
+        CALL LIB "CBOD_commun_afe.PackXmlData" ("AFE001")
+        IF (G_CALL_FLAG = 0)
+            RETURN 0
+        ENDIF
+    ENDIF
+ENDFUNC
+
+
+FUNC Data_Show ()
+ENDFUNC
