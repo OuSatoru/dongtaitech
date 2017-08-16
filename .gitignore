@@ -63,3 +63,4 @@ build
 *.db
 *.cpt
 *.pck
+.svn
