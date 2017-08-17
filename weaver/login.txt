@@ -1,0 +1,14 @@
+loginfile	/wui/theme/ecology8/page/login.jsp?templateId=3&logintype=1&gopage=
+logintype	1
+fontName	微软雅黑
+message	
+gopage	
+formmethod	get
+rnd	
+serial	
+username	
+isie	false
+islanguid	7
+loginid	09800903
+userpassword	13401766862
+submit	登录
